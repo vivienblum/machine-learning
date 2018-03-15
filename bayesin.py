@@ -67,7 +67,6 @@ if "bayesien" in CLASSIFIEURS:
     
     print("[*] Traitement")
     
-    res = getRes(X1, inv, log, rep)
     
     print("[*] Calcul d'erreur")
     print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
