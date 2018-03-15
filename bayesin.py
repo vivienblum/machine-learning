@@ -32,6 +32,17 @@ def getMatrix(X, Y):
         
         i += 1
     return inv, log, rep
+
+def getRes(X, inv, log, rep):
+    res = []
+    for index, img in enumerate(X):
+        g = []
+        
+        for i in range(10):
+            diff = (img - rep[i])
+            g.append(-log[i] - np.dot(np.dot(np.transpose(diff), inv[i]), diff))
+        res.append(np.argmax(np.array(g)))
+    return res
     
 X0 = np.load('data/trn_img.npy')
 Y0 = np.load('data/trn_lbl.npy')
@@ -51,14 +62,8 @@ X1 = np.load('data/dev_img.npy')
 Y1 = np.load('data/dev_lbl.npy')
 
 print("[*] Traitement")
-res = []
-for index, img in enumerate(X1):
-    g = []
-    
-    for i in range(10):
-        diff = (img - rep[i])
-        g.append(-log[i] - np.dot(np.dot(np.transpose(diff), inv[i]), diff))
-    res.append(np.argmax(np.array(g)))
+
+res = getRes(X1, inv, log, rep)
 
 print("[*] Calcul d'erreur")
 print("Taux réussite : " + str(getTauxReussite(Y1, res)))
@@ -70,24 +75,13 @@ print("[*] Apprentissage")
 
 myPca = PCA(n_components = 50).fit(X0)
 X0pca = myPca.transform(X0)
-
-inv = []
-log = []
-rep = []
     
 inv, log, rep = getMatrix(X0pca, Y0)
-    
 
 print("[*] Traitement")
 X1pca = myPca.transform(X1)
-res = []
-for index, img in enumerate(X1pca):
-    g = []
     
-    for i in range(10):
-        diff = (img - rep[i])
-        g.append(-log[i] - np.dot(np.dot(np.transpose(diff), inv[i]), diff))
-    res.append(np.argmax(np.array(g)))
+res = getRes(X1pca, inv, log, rep)
     
 print("[*] Calcul d'erreur")
 print("Taux réussite : " + str(getTauxReussite(Y1, res)))
