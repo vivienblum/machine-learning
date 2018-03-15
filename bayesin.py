@@ -9,6 +9,7 @@ Created on Wed Mar  7 09:03:32 2018
 import numpy as np
 import time
 from sklearn.decomposition import PCA
+from sklearn import svm
 import matplotlib.pyplot as plt
 
 def getTauxReussite(Y, res):
@@ -44,46 +45,56 @@ def getRes(X, inv, log, rep):
         res.append(np.argmax(np.array(g)))
     return res
     
+CLASSIFIEURS = ["bayesien", "pca+gaussien"]
+#CLASSIFIEURS = ["vector"]
+
 X0 = np.load('data/trn_img.npy')
 Y0 = np.load('data/trn_lbl.npy')
+
+X1 = np.load('data/dev_img.npy')
+Y1 = np.load('data/dev_lbl.npy')
 
 inv = []
 log = []
 rep = []
 
-print("** Bayésien **")
-time1 = time.time()
-print("[*] Apprentissage")
+if "bayesien" in CLASSIFIEURS:
+    print("** Bayésien **")
+    time1 = time.time()
+    print("[*] Apprentissage")
+        
+    inv, log, rep = getMatrix(X0, Y0)
     
-inv, log, rep = getMatrix(X0, Y0)
+    print("[*] Traitement")
     
-#On charge le dev
-X1 = np.load('data/dev_img.npy')
-Y1 = np.load('data/dev_lbl.npy')
-
-print("[*] Traitement")
-
-res = getRes(X1, inv, log, rep)
-
-print("[*] Calcul d'erreur")
-print("Taux réussite : " + str(getTauxReussite(Y1, res)))
-print("Temps : " + str(time.time() - time1))
-
-print("** PCA + Gaussien **")
-time2 = time.time()
-print("[*] Apprentissage")
-
-myPca = PCA(n_components = 50).fit(X0)
-X0pca = myPca.transform(X0)
+    res = getRes(X1, inv, log, rep)
     
-inv, log, rep = getMatrix(X0pca, Y0)
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - time1) + " sec")
 
-print("[*] Traitement")
-X1pca = myPca.transform(X1)
+if "pca+gaussien" in CLASSIFIEURS:
+    print("** PCA + Gaussien **")
+    time2 = time.time()
+    print("[*] Apprentissage")
     
-res = getRes(X1pca, inv, log, rep)
+    myPca = PCA(n_components = 50).fit(X0)
+    X0pca = myPca.transform(X0)
+        
+    inv, log, rep = getMatrix(X0pca, Y0)
     
-print("[*] Calcul d'erreur")
-print("Taux réussite : " + str(getTauxReussite(Y1, res)))
-print("Temps : " + str(time.time() - time2))
+    print("[*] Traitement")
+    X1pca = myPca.transform(X1)
+        
+    res = getRes(X1pca, inv, log, rep)
+        
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - time2) + " sec")
+    
+if "vector" in CLASSIFIEURS:
+    print("** Vector Machines **")
+    clf = svm.SVC()
+    clf.fit(X0, Y0)
+
 
