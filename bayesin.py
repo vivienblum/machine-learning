@@ -71,11 +71,11 @@ print("[*] Apprentissage")
 myPca = PCA(n_components = 50).fit(X0)
 X0pca = myPca.transform(X0)
 
-invPca = []
-logPca = []
-repPca = []
+inv = []
+log = []
+rep = []
     
-invPca, logPca, repPca = getMatrix(X0pca, Y0)
+inv, log, rep = getMatrix(X0pca, Y0)
     
 
 print("[*] Traitement")
@@ -85,8 +85,8 @@ for index, img in enumerate(X1pca):
     g = []
     
     for i in range(10):
-        diff = (img - repPca[i])
-        g.append(-logPca[i] - np.dot(np.dot(np.transpose(diff), invPca[i]), diff))
+        diff = (img - rep[i])
+        g.append(-log[i] - np.dot(np.dot(np.transpose(diff), inv[i]), diff))
     res.append(np.argmax(np.array(g)))
     
 print("[*] Calcul d'erreur")
