@@ -11,14 +11,31 @@ import time
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-ENV = "trn"
+def getTauxReussite(Y, res):
+    imgRecognized = 0
+    for index, result in enumerate(res):
+        if result == Y[index]:
+             imgRecognized += 1 
+    return imgRecognized/Y.shape[0]
 
-X0 = np.load('data/'+ENV+'_img.npy')
-Y0 = np.load('data/'+ENV+'_lbl.npy')
+def getMatrix(X, Y):
+    inv = []
+    log = []
+    rep = []
+    i = 0
+    while i < 10:
+        cv = np.cov(X[Y == i], rowvar = 0)
+        rep.append(X[Y == i].mean(axis = 0))
+        
+        log.append(np.linalg.slogdet(cv)[1])
+        inv.append(np.linalg.inv(cv))
+        
+        i += 1
+    return inv, log, rep
+    
+X0 = np.load('data/trn_img.npy')
+Y0 = np.load('data/trn_lbl.npy')
 
-#app = []
-#avg = []
-#cov = []
 inv = []
 log = []
 rep = []
@@ -26,20 +43,8 @@ rep = []
 print("** Bayésien **")
 time1 = time.time()
 print("[*] Apprentissage")
-i = 0
-while i < 10:
-    #app.append(X0[Y0 == i])
-    #avg.append(app[i].mean(axis = 0))
     
-    #cov.append(np.cov(app[i], rowvar = 0))
-    cv = np.cov(X0[Y0 == i], rowvar = 0)
-    rep.append(X0[Y0 == i].mean(axis = 0))
-    
-    
-    log.append(np.linalg.slogdet(cv)[1])
-    inv.append(np.linalg.inv(cv))
-    
-    i += 1
+inv, log, rep = getMatrix(X0, Y0)
     
 #On charge le dev
 X1 = np.load('data/dev_img.npy')
@@ -56,13 +61,7 @@ for index, img in enumerate(X1):
     res.append(np.argmax(np.array(g)))
 
 print("[*] Calcul d'erreur")
-imgRecognized = 0
-for index, result in enumerate(res):
-    if result == Y1[index]:
-         imgRecognized += 1       
-        
-taux = imgRecognized/X1.shape[0]
-print("Taux réussite : " + str(taux))
+print("Taux réussite : " + str(getTauxReussite(Y1, res)))
 print("Temps : " + str(time.time() - time1))
 
 print("** PCA + Gaussien **")
@@ -75,16 +74,8 @@ X0pca = myPca.transform(X0)
 invPca = []
 logPca = []
 repPca = []
-
-i = 0
-while i < 10:
-    cvPca = np.cov(X0pca[Y0 == i], rowvar = 0)
-    repPca.append(X0pca[Y0 == i].mean(axis = 0))
     
-    logPca.append(np.linalg.slogdet(cvPca)[1])
-    invPca.append(np.linalg.inv(cvPca))
-    
-    i += 1
+invPca, logPca, repPca = getMatrix(X0pca, Y0)
     
 
 print("[*] Traitement")
@@ -99,12 +90,6 @@ for index, img in enumerate(X1pca):
     res.append(np.argmax(np.array(g)))
     
 print("[*] Calcul d'erreur")
-imgRecognized = 0
-for index, result in enumerate(res):
-    if result == Y1[index]:
-         imgRecognized += 1       
-        
-taux = imgRecognized/X1.shape[0]
-print("Taux réussite : " + str(taux))
+print("Taux réussite : " + str(getTauxReussite(Y1, res)))
 print("Temps : " + str(time.time() - time2))
 
