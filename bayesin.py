@@ -10,6 +10,8 @@ import numpy as np
 import time
 from sklearn.decomposition import PCA
 from sklearn import svm
+from sklearn import preprocessing
+from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
 
 def getTauxReussite(Y, res):
@@ -45,8 +47,7 @@ def getRes(X, inv, log, rep):
         res.append(np.argmax(np.array(g)))
     return res
     
-CLASSIFIEURS = ["bayesien", "pca+gaussien"]
-#CLASSIFIEURS = ["vector"]
+CLASSIFIEURS = ["bayesien", "pca+gaussien", "vector", "neighbours", "pca+neighbours", "pca+vector"]
 
 X0 = np.load('data/trn_img.npy')
 Y0 = np.load('data/trn_lbl.npy')
@@ -60,21 +61,21 @@ rep = []
 
 if "bayesien" in CLASSIFIEURS:
     print("** Bayésien **")
-    time1 = time.time()
+    timeTmp = time.time()
     print("[*] Apprentissage")
         
     inv, log, rep = getMatrix(X0, Y0)
     
     print("[*] Traitement")
-    
+    res = getRes(X1, inv, log, rep)
     
     print("[*] Calcul d'erreur")
     print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
-    print("Temps : " + str(time.time() - time1) + " sec")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
 
 if "pca+gaussien" in CLASSIFIEURS:
     print("** PCA + Gaussien **")
-    time2 = time.time()
+    timeTmp = time.time()
     print("[*] Apprentissage")
     
     myPca = PCA(n_components = 50).fit(X0)
@@ -89,11 +90,84 @@ if "pca+gaussien" in CLASSIFIEURS:
         
     print("[*] Calcul d'erreur")
     print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
-    print("Temps : " + str(time.time() - time2) + " sec")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
+
+    print("[*] Enregistrement meilleur classifieur")
+    np.save('test.npy', res)
     
+
 if "vector" in CLASSIFIEURS:
     print("** Vector Machines **")
+    timeTmp = time.time()
+    print("[*] Apprentissage")
+    
+    X0_Scale = preprocessing.scale(X0)
     clf = svm.SVC()
-    clf.fit(X0, Y0)
+    clf.fit(X0_Scale, Y0)
+    
+    print("[*] Traitement")
+    X1_Scale = preprocessing.scale(X1)
+    res = clf.predict(X1_Scale)
+    
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
 
-
+if "neighbours" in CLASSIFIEURS:
+    print("** Neighbours **")
+    
+    timeTmp = time.time()
+    print("[*] Apprentissage")
+    
+    neighbour = KNeighborsClassifier(n_neighbors = 3)
+    neighbour.fit(X0, Y0)
+    
+    print("[*] Traitement")
+    res = neighbour.predict(X1)
+    
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
+    
+if "pca+neighbours" in CLASSIFIEURS:
+    print("** PCA + Neighbours **")
+    
+    timeTmp = time.time()
+    print("[*] Apprentissage")
+    myPca = PCA(n_components = 50).fit(X0)
+    X0pca = myPca.transform(X0)
+    
+    neighbour = KNeighborsClassifier(n_neighbors = 3)
+    neighbour.fit(X0pca, Y0)
+    
+    print("[*] Traitement")
+    X1pca = myPca.transform(X1)
+    res = neighbour.predict(X1pca)
+    
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
+    
+if "pca+vector" in CLASSIFIEURS:
+    print("** PCA + Neighbours **")
+    
+    timeTmp = time.time()
+    print("[*] Apprentissage")
+    myPca = PCA(n_components = 50).fit(X0)
+    X0pca = myPca.transform(X0)
+    
+    X0scale = preprocessing.scale(X0pca)
+    clf = svm.SVC()
+    clf.fit(X0scale, Y0)
+    
+    neighbour = KNeighborsClassifier(n_neighbors = 3)
+    neighbour.fit(X0scale, Y0)
+    
+    print("[*] Traitement")
+    X1pca = myPca.transform(X1)
+    X1scale = preprocessing.scale(X1pca)
+    res = neighbour.predict(X1scale)
+    
+    print("[*] Calcul d'erreur")
+    print("Taux réussite : " + str(getTauxReussite(Y1, res)*100) + "%")
+    print("Temps : " + str(time.time() - timeTmp) + " sec")
