@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn import svm
 from sklearn import preprocessing
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 def getTauxReussite(Y, res):
@@ -95,9 +96,13 @@ if "pca+gaussien" in CLASSIFIEURS:
     print("[*] Enregistrement meilleur classifieur")
     np.save('test.npy', res)
     
+    print("[*] Matrice de confusion")
+    matConf = confusion_matrix(Y1, res)
+    print(matConf)
+    
 
 if "vector" in CLASSIFIEURS:
-    print("** Vector Machines **")
+    print("** Vector Machines (SVC) **")
     timeTmp = time.time()
     print("[*] Apprentissage")
     
@@ -149,14 +154,15 @@ if "pca+neighbours" in CLASSIFIEURS:
     print("Temps : " + str(time.time() - timeTmp) + " sec")
     
 if "pca+vector" in CLASSIFIEURS:
-    print("** PCA + Neighbours **")
+    print("** PCA + SVC **")
     
     timeTmp = time.time()
     print("[*] Apprentissage")
+    
     myPca = PCA(n_components = 50).fit(X0)
     X0pca = myPca.transform(X0)
-    
     X0scale = preprocessing.scale(X0pca)
+    
     clf = svm.SVC()
     clf.fit(X0scale, Y0)
     
@@ -166,6 +172,7 @@ if "pca+vector" in CLASSIFIEURS:
     print("[*] Traitement")
     X1pca = myPca.transform(X1)
     X1scale = preprocessing.scale(X1pca)
+    
     res = neighbour.predict(X1scale)
     
     print("[*] Calcul d'erreur")
